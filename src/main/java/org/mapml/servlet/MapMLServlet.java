@@ -102,8 +102,11 @@ public class MapMLServlet extends HttpServlet {
             double ymin = (double)QueryParam.ymin.parse(request);
             double xmax = (double)QueryParam.xmax.parse(request);
             double ymax = (double)QueryParam.ymax.parse(request);
-
-            Bbox bbox = new Bbox(Arrays.asList(xmin,ymin,xmax,ymax));
+            
+            Bbox bbox = null;
+            if (!(xmin == 0D && ymin == 0D && xmax == 0D && ymax == 0D)) {
+                bbox = new Bbox(Arrays.asList(xmin,ymin,xmax,ymax));
+            }
 
             // could validate that the requested projection is available
             String projection = (String)QueryParam.projection.parse(request);

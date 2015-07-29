@@ -107,6 +107,32 @@ public class MapMLPrinterTest {
     } catch (ParserConfigurationException e) {}
   }
   @Test
+  public void testNullBbox() {
+    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+    PrintWriter out = new PrintWriter(ba);
+    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, null, out);
+    out.flush();
+    String result = ba.toString();
+    assertNotNull(result);
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    dbf.setValidating(false);
+    dbf.setNamespaceAware(false);
+    try {
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      try  {
+          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+          // message,expected,actual
+          assertEquals("MapML document must begin with <mapml> element","mapml",d.getDocumentElement().getNodeName());
+          assertEquals("MapML document must have one <head> element",1,d.getElementsByTagName("head").getLength());
+          assertEquals("MapML document must have one <body> element",1,d.getElementsByTagName("body").getLength());
+          assertEquals("test MapML document must have 6 input elements",6,d.getElementsByTagName("input").getLength());
+          assertEquals("test MapML document must have 0 tile elements",0,d.getElementsByTagName("tile").getLength());
+      } catch (Exception se) {
+          fail("Error parsing MapML - document not well-formed");
+      }
+    } catch (ParserConfigurationException e) {}
+  }
+  @Test
   public void testLicense() {
     ByteArrayOutputStream ba = new ByteArrayOutputStream();
     PrintWriter out = new PrintWriter(ba);

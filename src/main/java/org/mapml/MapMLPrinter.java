@@ -150,7 +150,7 @@ public class MapMLPrinter {
    * @param out the PrintWriter on which to print.
    */
   public void printMapMLDoc(String responseType, long start, String base, int zoom, Bbox bbox, PrintWriter out) {
-      long tileCount = tileCount(zoom,bbox);
+      long tileCount = bbox == null?0:tileCount(zoom,bbox);
       // check that start is an integral multiple of pageSize
       // check that start is less than tileCount
       // check that next is less than tileCount
@@ -168,7 +168,7 @@ public class MapMLPrinter {
       out.print("<base href=\""+base+"\"/>");
       out.print("<link rel=\"license\" href=\""+licenseUrl+"\" text=\""+licenseText+"\"/>");
       out.print("</head><body>");
-      if (!serviceBounds.intersects(zoom, bbox)) {
+      if (bbox == null || !serviceBounds.intersects(zoom, bbox)) {
           out.print(getExtentElement(base, -1, null));
       } else {
           out.print(getExtentElement(base, zoom, bbox));
