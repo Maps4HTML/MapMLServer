@@ -1,0 +1,146 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.mapml</groupId>
+    <artifactId>MapMLTileServlet</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <name>MapMLTileServlet</name>
+
+    <properties>
+        <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    
+    <pluginRepositories>
+      <pluginRepository>
+        <id>Maven2</id>
+        <url>https://repo1.maven.org/maven2</url>
+      </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-core</artifactId>
+          <version>2.3</version>
+        </dependency>
+        <dependency>
+          <groupId>com.vividsolutions</groupId>
+          <artifactId>jts</artifactId>
+          <version>1.13</version>
+        </dependency>
+        <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>3.1.0</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.ehcache</groupId>
+          <artifactId>ehcache-web</artifactId>
+          <version>2.0.4</version>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.10</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-test</artifactId>
+          <version>4.1.4.RELEASE</version>
+          <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>2.18.1</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-war-plugin</artifactId>
+              <version>2.6</version>
+              <configuration>
+                <archiveClasses>false</archiveClasses>
+              </configuration>
+            </plugin>
+            <!-- required to redeploy the war file to a running tomcat server -->
+            <plugin>
+              <groupId>org.apache.tomcat.maven</groupId>
+              <artifactId>tomcat7-maven-plugin</artifactId>
+              <version>2.1</version>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.3.2</version>
+              <configuration>
+                <source>1.7</source>
+                <target>1.7</target>
+                <debug>true</debug>
+              </configuration>
+              <executions>
+                <execution>
+                  <id>default-testCompile</id>
+                  <phase>test-compile</phase>
+                  <goals>
+                    <goal>testCompile</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>2.3.2</version>
+            <configuration>
+              <source>1.7</source>
+              <target>1.7</target>
+            </configuration>
+          </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+      <profile>
+        <id>local-dev</id>
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.tomcat.maven</groupId>
+              <artifactId>tomcat7-maven-plugin</artifactId>
+              <configuration>
+                <server>localhost</server>
+                <url>http://localhost:8080/manager/text</url> 
+                <path>/mapml</path>
+                <update>true</update>
+              </configuration>
+              <executions>
+                <execution>
+                  <id>localhost</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>redeploy</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </build>
+      </profile>
+      
+    </profiles>
+
+</project>

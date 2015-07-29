@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+    <context-param>
+        <param-name>log4jConfigLocation</param-name>
+        <param-value>classpath:org/mapml/log4j.xml</param-value>
+    </context-param>
+    <filter>
+      <filter-name>gzip</filter-name>
+      <filter-class>net.sf.ehcache.constructs.web.filter.GzipFilter</filter-class>
+    </filter>
+    <servlet>
+      <servlet-name>osm</servlet-name>
+      <servlet-class>org.mapml.servlet.MapMLServlet</servlet-class>
+      <init-param>
+        <param-name>extent</param-name>
+        <!-- OSM scope <param-value>-180,-85.0511,180,85.0511</param-value> -->
+        <param-value>-180,-85,180,85</param-value>
+      </init-param>
+      <init-param>
+        <param-name>zoomRange</param-name>
+        <param-value>0,18</param-value>
+      </init-param>
+      <init-param>
+        <param-name>tileUrlTemplate</param-name>
+        <param-value>http://{s}.tile.osm.org/{z}/{x}/{y}.png</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseUrl</param-name>
+        <param-value>http://www.openstreetmap.org/copyright</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseText</param-name>
+        <param-value>© OpenStreetMap contributors</param-value>
+      </init-param>
+      <init-param>
+        <param-name>tileServers</param-name>
+        <param-value>a,b,c</param-value>
+      </init-param>
+      <load-on-startup>2</load-on-startup>
+    </servlet>
+    <servlet>
+      <servlet-name>cbmt</servlet-name>
+      <servlet-class>org.mapml.servlet.MapMLServlet</servlet-class>
+      <init-param>
+        <param-name>extent</param-name>
+        <param-value>-180,-85,180,85</param-value>
+      </init-param>
+      <init-param>
+        <param-name>zoomRange</param-name>
+        <param-value>0,15</param-value>
+      </init-param>
+      <init-param>
+        <param-name>tileUrlTemplate</param-name>
+        <param-value>http://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBMT_CBCT_GEOM_3857/MapServer/tile/{z}/{y}/{x},http://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBMT_TXT_3857/MapServer/tile/{z}/{y}/{x}</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseUrl</param-name>
+        <param-value>http://open.canada.ca/en/open-government-licence-canada</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseText</param-name>
+        <param-value>Open Government Licence - Canada</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+  <mime-mapping>
+    <extension>ico</extension>
+    <mime-type>image/x-icon</mime-type>
+  </mime-mapping>
+  <servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>*.ico</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>osm</servlet-name>
+    <url-pattern>/osm/*</url-pattern>    
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>cbmt</servlet-name>
+    <url-pattern>/cbmt/*</url-pattern>    
+  </servlet-mapping>
+</web-app>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Appenders>
+    <File name="mapml_tile_servlet" fileName="${sys:catalina.base}/logs/mapml_tile_servlet.log" append="false">
+      <PatternLayout pattern="%t %-5p %c{2} - %m%n"/>
+    </File>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="info">
+      <AppenderRef ref="mapml_tile_servlet"/>
+    </Root>
+  </Loggers>
+</Configuration>
