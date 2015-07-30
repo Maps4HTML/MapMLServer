@@ -31,8 +31,8 @@
         <param-value>http://www.openstreetmap.org/copyright</param-value>
       </init-param>
       <init-param>
-        <param-name>licenseText</param-name>
-        <param-value>© OpenStreetMap contributors</param-value>
+        <param-name>licenseTitle</param-name>
+        <param-value>© OpenStreetMap contributors CC BY-SA</param-value>
       </init-param>
       <init-param>
         <param-name>tileServers</param-name>
@@ -60,8 +60,8 @@
         <param-value>http://open.canada.ca/en/open-government-licence-canada</param-value>
       </init-param>
       <init-param>
-        <param-name>licenseText</param-name>
-        <param-value>Open Government Licence - Canada</param-value>
+        <param-name>licenseTitle</param-name>
+        <param-value>© Natural Resources Canada - Open Government Licence - Canada</param-value>
       </init-param>
       <load-on-startup>3</load-on-startup>
     </servlet>

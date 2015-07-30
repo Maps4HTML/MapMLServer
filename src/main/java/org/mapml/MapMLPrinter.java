@@ -74,6 +74,7 @@ public class MapMLPrinter {
   private final HashMap<Integer, TileCoordinates> maxima = new HashMap<>();
   private String licenseUrl;
   private String licenseText;
+  private String licenseTitle;
 
 
   public MapMLPrinter() {
@@ -127,11 +128,18 @@ public class MapMLPrinter {
       pageSize = size;
   }
   /**
-   * The text that will be reflected in the link to the licenseUrl.
+   * The text that will be reflected in the link[@rel=license].
    * @param text 
    */
   public void setLicenseText(String text) {
       this.licenseText = text;
+  }
+  /**
+   * The text that will be reflected in link[@rel=license]/@title.
+   * @param text 
+   */
+  public void setLicenseTitle(String text) {
+      this.licenseTitle = text;
   }
   /**
    * The URL to the license by virtue of which these tiles are served.
@@ -166,7 +174,7 @@ public class MapMLPrinter {
       out.print("<meta charset=\"utf-8\"/>");
       out.print("<meta name=\"count\" content=\""+tileCount+"\"/>");
       out.print("<base href=\""+base+"\"/>");
-      out.print("<link rel=\"license\" href=\""+licenseUrl+"\" text=\""+licenseText+"\"/>");
+      out.print("<link rel=\"license\" href=\""+licenseUrl+"\" text=\""+licenseText+"\" title=\""+licenseTitle+"\"/>");
       out.print("</head><body>");
       if (bbox == null || !serviceBounds.intersects(zoom, bbox)) {
           out.print(getExtentElement(base, -1, null));

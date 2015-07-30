@@ -77,7 +77,7 @@ public class MapMLPrinterTest {
     printer.setTileUrlTemplates(templates);
     printer.setPageSize(100);
     printer.setLicenseUrl("http://example.org/license");
-    printer.setLicenseText("Example license text");
+    printer.setLicenseTitle("Tooltip info for license");
   }
   
   @Test
@@ -157,7 +157,7 @@ public class MapMLPrinterTest {
           }
           assertNotNull(licenseLink);
           assertTrue(licenseLink.getAttribute("href").equals("http://example.org/license"));
-          assertTrue(licenseLink.getAttribute("text").equals("Example license text"));
+          assertTrue(licenseLink.getAttribute("title").equals("Tooltip info for license"));
       } catch (Exception se) {
           fail("Error parsing MapML - document not well-formed");
       }

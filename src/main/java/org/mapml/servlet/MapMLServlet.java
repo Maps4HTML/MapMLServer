@@ -81,8 +81,8 @@ public class MapMLServlet extends HttpServlet {
         printer.setServiceBounds(new MapMLServiceBounds(Integer.parseInt(range[0]),Integer.parseInt(range[1]),extent));
         printer.setTileUrlTemplates(config.getInitParameter("tileUrlTemplate").split(","));
         printer.setTileServers(config.getInitParameter("tileServers"));
-        printer.setLicenseText(config.getInitParameter("licenseText"));
         printer.setLicenseUrl(config.getInitParameter("licenseUrl"));
+        printer.setLicenseTitle(config.getInitParameter("licenseTitle"));
     }
     /**
      * Processes <code>GET</code> requests.
