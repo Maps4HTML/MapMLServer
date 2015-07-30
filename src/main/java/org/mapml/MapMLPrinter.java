@@ -174,7 +174,7 @@ public class MapMLPrinter {
       out.print("<meta charset=\"utf-8\"/>");
       out.print("<meta name=\"count\" content=\""+tileCount+"\"/>");
       out.print("<base href=\""+base+"\"/>");
-      out.print("<link rel=\"license\" href=\""+licenseUrl+"\" text=\""+licenseText+"\" title=\""+licenseTitle+"\"/>");
+      out.print("<link rel=\"license\" href=\""+licenseUrl+"\" title=\""+licenseTitle+"\"/>");
       out.print("</head><body>");
       if (bbox == null || !serviceBounds.intersects(zoom, bbox)) {
           out.print(getExtentElement(base, -1, null));

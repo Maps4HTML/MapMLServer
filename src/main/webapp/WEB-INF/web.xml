@@ -57,11 +57,11 @@
       </init-param>
       <init-param>
         <param-name>licenseUrl</param-name>
-        <param-value>http://open.canada.ca/en/open-government-licence-canada</param-value>
+        <param-value>http://www.nrcan.gc.ca/earth-sciences/geography/topographic-information/free-data-geogratis/licence/17285</param-value>
       </init-param>
       <init-param>
         <param-name>licenseTitle</param-name>
-        <param-value>© Natural Resources Canada - Open Government Licence - Canada</param-value>
+        <param-value>Canada Base Map © Natural Resources Canada</param-value>
       </init-param>
       <load-on-startup>3</load-on-startup>
     </servlet>
