@@ -70,6 +70,7 @@ public class MapMLServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        response.addHeader("Access-Control-Allow-Origin", "*");
         processRequest(request, response);
     }
 
