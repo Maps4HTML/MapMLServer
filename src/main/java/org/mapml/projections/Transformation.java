@@ -38,41 +38,32 @@
  * publicity pertaining to the work without specific, written prior permission. 
  * Title to copyright in this work will at all times remain with copyright holders.
 */
+package org.mapml.projections;
 
-
-package org.mapml;
-
-import java.util.Arrays;
-import java.util.List;
-
-/**
- *
- * @author Peter Rushforth
- */
-public class MapMLConstants {
-      private MapMLConstants() {};
-      
-      public static final String REL_WEST =       "west";
-      public static final String REL_SOUTHWEST =  "southwest";
-      public static final String REL_SOUTH =      "south";
-      public static final String REL_SOUTHEAST =  "southeast";
-      public static final String REL_EAST =       "east";
-      public static final String REL_NORTHEAST =  "northeast";
-      public static final String REL_NORTH =      "north";
-      public static final String REL_NORTHWEST =  "northwest";
-      public static final String REL_ZOOMIN =     "zoomin";
-      public static final String REL_ZOOMOUT =    "zoomout";
-      public static final String REL_ZOOMTO =     "zoomto";
-      public static final String REL_PANTO =      "panto";
-      public static final String REL_NEXT =       "next";
-      public static final String REL_LICENSE =    "license";
-      
-      public static enum DIRECTION  
-          {REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST}
-      public static final List<String> CARDINAL_DIRECTIONS = 
-          Arrays.asList(REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST);
-      public static final List<String> ZOOM_RELS = Arrays.asList(REL_ZOOMIN,REL_ZOOMOUT,REL_ZOOMTO);
-      
-      public static int PAGESIZE = 100;
-
+public class Transformation {
+  private final double a;
+  private final double b;
+  private final double c;
+  private final double d;
+  
+  public Transformation(double a, double b, double c, double d) {
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+  }
+  
+  public Point transform(Point p, double scale) {
+    if (Double.compare(scale, 0D) == 0) { 
+      scale = 1.0D;
+    } 
+    return new Point(scale * (this.a * p.x + this.b), scale * (this.c * p.y + this.d));
+  }
+  
+  public Point untransform (Point p, double scale) {
+    if (Double.compare(scale, 0D) == 0) { 
+      scale = 1.0D;
+    }
+    return new Point((p.x / scale - this.b) / this.a, (p.y / scale - this.d) / this.c);
+  }
 }

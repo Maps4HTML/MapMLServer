@@ -51,13 +51,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.mapml.MapMLServiceBounds;
 import org.mapml.MapMLPrinter;
+import org.mapml.exceptions.BadRequestException;
+import org.mapml.projections.Bounds;
+import org.mapml.projections.Point;
 import org.mapml.uri.QueryParam;
-import org.mapml.util.Bbox;
 
 @WebServlet(name = "MapMLServlet", urlPatterns = {"/MapMLServlet"})
 public class MapMLServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private final MapMLPrinter printer = new MapMLPrinter();
+    private MapMLPrinter printer;
 
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -77,9 +79,14 @@ public class MapMLServlet extends HttpServlet {
     @Override
     public void init() {
         ServletConfig config = getServletConfig();
-        Bbox extent = new Bbox(config.getInitParameter("extent"));
+        Bounds extent = new Bounds(config.getInitParameter("extent"));
         String[] range = config.getInitParameter("zoomRange").split(",");
-        printer.setServiceBounds(new MapMLServiceBounds(Integer.parseInt(range[0]),Integer.parseInt(range[1]),extent));
+        
+        String projection = config.getInitParameter("projection");
+        printer = new MapMLPrinter(projection);
+        
+        printer.setServiceBounds(new MapMLServiceBounds(Integer.parseInt(range[0]),Integer.parseInt(range[1]),extent, printer.getTiledCRS()));
+        
         printer.setTileUrlTemplates(config.getInitParameter("tileUrlTemplate").split(","));
         printer.setTileServers(config.getInitParameter("tileServers"));
         printer.setLicenseUrl(config.getInitParameter("licenseUrl"));
@@ -104,15 +111,21 @@ public class MapMLServlet extends HttpServlet {
             double xmax = (double)QueryParam.xmax.parse(request);
             double ymax = (double)QueryParam.ymax.parse(request);
             
-            Bbox bbox = null;
+            Bounds bounds = null;
             if (!(xmin == 0D && ymin == 0D && xmax == 0D && ymax == 0D)) {
-                bbox = new Bbox(Arrays.asList(xmin,ymin,xmax,ymax));
+                bounds = new Bounds(new Point(xmin,ymin), new Point(xmax,ymax));
             }
 
-            // could validate that the requested projection is available
             String projection = (String)QueryParam.projection.parse(request);
+            String availableProjection = printer.getTiledCRS().getName();
+            // validate that the requested projection is available
+            if (!availableProjection.equalsIgnoreCase(projection) && !projection.equalsIgnoreCase("OSMTILE")) {
+                // this could probably be a 416, I think.
+                throw new BadRequestException("Invalid projection requested: "+ projection);
+            }
+            projection = availableProjection;
 
-            // alt is a stealth parameter, not part of the contract
+            // alt is a stealth parameter, not part of the contract good for debugging responses though
             String alt = (String)QueryParam.alt.parse(request);
             String responseType;
             if (alt != null && alt.equalsIgnoreCase("xml")) {
@@ -129,7 +142,7 @@ public class MapMLServlet extends HttpServlet {
             String base = request.getRequestURL().toString();
 
             try (PrintWriter out = response.getWriter()) {
-                printer.printMapMLDoc(responseType, start, base,  zoom, bbox, out);
+                printer.printMapMLDoc(responseType, start, base,  zoom, bounds, projection, out);
             } catch (Exception e) {
                 response.sendError(500, e.getMessage());
             }

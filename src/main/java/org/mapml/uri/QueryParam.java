@@ -84,8 +84,6 @@ public enum QueryParam {
         }},
     projection("projection", "OSMTILE") {
       Object parseValue(String stringValue) {
-          if (!stringValue.equals("OSMTILE") && !stringValue.equals("WGS84"))
-              throw new RuntimeException("Valid projection values are: OSMTILE or WGS84");
           return stringValue;
       }},
     start("start", 0L) {

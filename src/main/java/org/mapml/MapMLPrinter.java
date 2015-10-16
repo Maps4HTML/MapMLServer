@@ -42,15 +42,14 @@
 package org.mapml;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import org.mapml.util.Bbox;
+import org.mapml.projections.Bounds;
+import org.mapml.projections.TileCoordinates;
+import org.mapml.projections.TiledCRS;
 
 /**
  * This class prints a MapML tile reference document.  It is created so that
@@ -67,29 +66,29 @@ import org.mapml.util.Bbox;
  */
 
 public class MapMLPrinter {
-  private static int pageSize = 100;
   private MapMLServiceBounds serviceBounds;
+  private final TiledCRS tiledCRS;
   private String[] tileUrlTemplates;
   private final HashSet<String> tileServers = new HashSet<>();
-  private final HashMap<Integer, TileCoordinates> maxima = new HashMap<>();
   private String licenseUrl;
-  private String licenseText;
   private String licenseTitle;
 
 
-  public MapMLPrinter() {
-    init();
+  public MapMLPrinter(String projection) {
+    this.tiledCRS = new TiledCRS(projection);
   }
   /**
    * Set up the maximum tile coordinates on a per-zoom-level basis
    */
-  private void init() {
-    // establish the maximum tile coordinates for each zoom value
-    // we know that the minimum x and y are 0 at 85.0511D North and 180.0 West
-    for (int zoom = 0; zoom < 21 ;zoom++) {
-      maxima.put(zoom, getTileCoordinates(zoom, -85.0511D, 180.0D));
-    }
-  }
+//  private void init() {
+//    // establish the maximum tile coordinates for each zoom value
+//    // we know that the minimum x and y are 0 at 85.0511D North and 180.0 West
+//    for (int zoom = 0; zoom < 21 ;zoom++) {
+//      maxima.put(zoom, getTileCoordinates(zoom, -85.0511D, 180.0D));
+//    }
+//  }
+  
+  
   /**
    * Set the service bounds (min/max zoom, extent)
    * @param serviceBounds 
@@ -120,19 +119,8 @@ public class MapMLPrinter {
       this.tileServers.addAll(Arrays.asList(servers.split(",")));
     }
   }
-  /**
-   * For testing purposes need to be able to set the pagesize. 
-   * @param size 
-   */
-  protected void setPageSize(int size) {
-      pageSize = size;
-  }
-  /**
-   * The text that will be reflected in the link[@rel=license].
-   * @param text 
-   */
-  public void setLicenseText(String text) {
-      this.licenseText = text;
+  private int getPageSize() {
+      return this.tiledCRS.getPageSize();
   }
   /**
    * The text that will be reflected in link[@rel=license]/@title.
@@ -148,23 +136,26 @@ public class MapMLPrinter {
   public void setLicenseUrl(String url) {
       this.licenseUrl = url;
   }
+  public TiledCRS getTiledCRS() {
+      return this.tiledCRS;
+  }
   /**
    * Print a mapml document on the output, given the parameters
    * @param responseType the mime type to reflect in the &lt;meta&gt element
    * @param start offset, given tiles are row,col ordered
    * @param base base URI to serialize as base element
    * @param zoom zoom level at which the tile references are generated
-   * @param bbox the map extent to use for generating tile references in/touching
+   * @param bounds the map extent to use for generating tile references in/touching
    * @param out the PrintWriter on which to print.
    */
-  public void printMapMLDoc(String responseType, long start, String base, int zoom, Bbox bbox, PrintWriter out) {
-      long tileCount = bbox == null?0:tileCount(zoom,bbox);
+  public void printMapMLDoc(String responseType, long start, String base, int zoom, Bounds bounds, String projection, PrintWriter out) {
+      long tileCount = bounds == null?0:this.tiledCRS.tileCount(zoom, bounds);
       // check that start is an integral multiple of pageSize
       // check that start is less than tileCount
       // check that next is less than tileCount
       long next = 0L;
-      if (tileCount > pageSize) {
-          next = start + pageSize;
+      if (tileCount > getPageSize()) {
+          next = start + getPageSize();
           if (next > tileCount) 
               next = 0L;
       }
@@ -172,56 +163,60 @@ public class MapMLPrinter {
       out.print("<mapml><head><title>Tile references for extent@value, sorted by distance from centre</title>");
       out.print("<meta http-equiv=\"Content-Type\" content=\""+responseType+"\"/>");
       out.print("<meta charset=\"utf-8\"/>");
-      out.print("<meta name=\"count\" content=\""+tileCount+"\"/>");
+      out.print("<meta name=\"projection\" content=\""+projection+"\"/>");
+      out.print("<meta name=\"zoom\" content=\""+zoom+"\"/>");
+      out.print("<meta name=\"area\" content=\""+tileCount+"\"/>");
       out.print("<base href=\""+base+"\"/>");
       out.print("<link rel=\"license\" href=\""+licenseUrl+"\" title=\""+licenseTitle+"\"/>");
       out.print("</head><body>");
-      if (bbox == null || !serviceBounds.intersects(zoom, bbox)) {
-          out.print(getExtentElement(base, -1, null));
+      if (bounds == null || !serviceBounds.intersects(zoom, bounds)) {
+          out.print(getExtentElement(base, zoom, bounds, projection));
       } else {
-          out.print(getExtentElement(base, zoom, bbox));
+          out.print(getExtentElement(base, zoom, bounds, projection));
           if (next > 0 && next != tileCount) {
-              out.print("<link rel=\"next\" href=\""+base+"?bbox="+bbox+"&amp;projection=OSMTILE&amp;zoom="+zoom+"&amp;start="+next+"\" type=\"text/mapml\"/> ");
+              out.print("<link rel=\"next\" href=\""+base+"?xmin="+bounds.getMin().x+"&amp;ymin="+bounds.getMin().y+"&amp;xmax="+bounds.getMax().x+"&amp;ymax="+bounds.getMax().y+"&amp;projection=OSMTILE&amp;zoom="+zoom+"&amp;start="+next+"\" type=\"text/mapml\"/> ");
           }
-          out.print(getTileElements(zoom, bbox, start));
+          out.print(getTileElements(zoom, bounds, start));
       }
       out.print("</body></mapml>");
   }
   /**
    * Gets the string representing the extent of the service, reflecting the
-   * values of the zoom and bbox for the request in the value="" attributes.
+   * values of the zoom and bounds for the request in the value="" attributes.
    * 
    * @param url the URI at which the service is available
    * @param zoom the zoom for which the extent is to be generated
-   * @param bbox the value to use for the bbox 
-   * @return a String <extent> element for the service
+   * @param bounds the value to use for the extent
+   * @return a String <extent> element
    */
-  protected String getExtentElement(String url, int zoom, Bbox bbox) {
+  protected String getExtentElement(String url, int zoom, Bounds bounds, String projection) {
     
-    String userWest = bbox != null  ? " value=\"" + bbox.getWest()  + "\"" :"";
-    String userSouth = bbox != null ? " value=\"" + bbox.getSouth() + "\"" :"";
-    String userEast = bbox != null  ? " value=\"" + bbox.getEast()  + "\"" :"";
-    String userNorth = bbox != null ? " value=\"" + bbox.getNorth() + "\"" :"";
-    String userZoom = zoom != -1    ? " value=\"" + zoom            + "\"" :"";
+    String userXmin = bounds != null  ? " value=\"" + bounds.getMin().x  + "\"" :"";
+    String userYmin = bounds != null  ? " value=\"" + bounds.getMin().y + "\"" :"";
+    String userXmax = bounds != null  ? " value=\"" + bounds.getMax().x  + "\"" :"";
+    String userYmax = bounds != null  ? " value=\"" + bounds.getMax().y + "\"" :"";
+    int z = zoom != -1 ? zoom : serviceBounds.getMinZoom();
+    String userZoom = " value=\"" + z + "\"";
     
-    String minLon = " min=\"" + serviceBounds.getWest() + "\"";
-    String minLat = " min=\"" + serviceBounds.getSouth()+ "\"";
-    String maxLon = " max=\"" + serviceBounds.getEast() + "\"";
-    String maxLat = " max=\"" + serviceBounds.getNorth()+ "\"";
+    String minX = " min=\"" + serviceBounds.getPixelBounds(z).getMin().floor().x +  "\"" ;
+    String minY = " min=\"" + serviceBounds.getPixelBounds(z).getMin().floor().y +  "\"" ;
+    String maxX = " max=\"" + serviceBounds.getPixelBounds(z).getMax().floor().x +  "\"" ;
+    String maxY = " max=\"" + serviceBounds.getPixelBounds(z).getMax().floor().y +  "\"" ;
     
     String minZm = " min=\""  + serviceBounds.getMinZoom()  + "\"";
     String maxZm = " max=\""  + serviceBounds.getMaxZoom()  + "\"";
-    
+    // TODO DO NOT RETURN THE DEFAULT PROJECTION OSMTILE HERE IF IT IS NOT AVAILABLE
+    // FROM THE PRINTER
     String extent = 
-      "<extent units=\"WGS84\" "
+      "<extent units=\""+projection+"\" "
       +"action=\""+url+"\" "
       +"method=\"get\" enctype=\"application/x-www-form-urlencoded\">"
-        +"<input name=\"xmin\" type=\"xmin\" " + userWest  + minLon  + maxLon  + "/>"
-        +"<input name=\"ymin\" type=\"ymin\" " + userSouth + minLat  + maxLat  + "/>"
-        +"<input name=\"xmax\" type=\"xmax\" " + userEast  + minLon  + maxLon  + "/>"
-        +"<input name=\"ymax\" type=\"ymax\" " + userNorth + minLat  + maxLat  + "/>"
+        +"<input name=\"xmin\" type=\"xmin\" " + userXmin  + minX  + maxX  + "/>"
+        +"<input name=\"ymin\" type=\"ymin\" " + userYmin + minY  + maxY  + "/>"
+        +"<input name=\"xmax\" type=\"xmax\" " + userXmax  + minX  + maxX  + "/>"
+        +"<input name=\"ymax\" type=\"ymax\" " + userYmax + minY  + maxY  + "/>"
         +"<input name=\"zoom\" type=\"zoom\" " + userZoom  + minZm   + maxZm   + "/>"
-        +"<input name=\"projection\" type=\"projection\" value=\"OSMTILE\"/>"
+        +"<input name=\"projection\" type=\"projection\" value=\""+ projection +"\"/>"
       +"</extent>";
     return extent;
   }
@@ -230,15 +225,15 @@ public class MapMLPrinter {
    * and tileUrlTemplates with which the class is configured.
    * 
    * @param zoom the zoom of the request
-   * @param bbox the extent of the request
+   * @param bounds the extent of the request in projected, *scaled* units
    * @param start offset 
    * @return the String value of the set of <tile> elements
    */
-  protected String getTileElements(int zoom, Bbox bbox, long start) {
+  protected String getTileElements(int zoom, Bounds bounds, long start) {
     StringBuilder tes = new StringBuilder();
     Iterator<String> i = tileServers.iterator();
     String s = "";
-    List<TileCoordinates> tiles = getTilesInBbox(zoom, bbox,start);
+    List<TileCoordinates> tiles = this.tiledCRS.getTilesForExtent(bounds, zoom, start);
     
     for (TileCoordinates t : tiles) {
        if (i.hasNext()) {
@@ -252,124 +247,12 @@ public class MapMLPrinter {
              .replaceFirst("\\{y\\}", t.y+"").replaceFirst("\\{x\\}", t.x+"")
              .replaceAll("&", "&amp;");
           tes.append("<tile ")
-           .append("x=\"").append(t.x).append("\" y=\"").append(t.y).append("\" ")
+           .append("col=\"").append(t.x).append("\" row=\"").append(t.y).append("\" ")
            // .append("distance=\"").append(c.distanceTo(t)).append("\" ")
            .append("src=\"").append(src).append("\"/>");
        }
     }
     return tes.toString();
-  }
-  /**
-   * Get the integer TileCoordinates of the requested zoom,lat,long location.
-   * 
-   * @param zoom level at which to do the conversion
-   * @param latitude double latitude of the point to convert
-   * @param longitude double longitude of the point to convert
-   * @return A point, converted to TileCoordinate (integral) space
-   */
-  protected  TileCoordinates getTileCoordinates(int zoom, double latitude, double longitude) {
-    // see http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Lon..2Flat._to_tile_numbers
-    double lat = Math.toRadians(latitude);
-    double lon = Math.toRadians(longitude);
-    
-    double x = lon;
-    double y = Math.log( Math.tan(lat)+(1.0/Math.cos(lat)) );
-    x = (1.0 + ( x / Math.PI)) / 2.0;
-    y = (1.0 - ( y / Math.PI)) / 2.0;
-    long tilex = Math.round(Math.floor(Math.pow(2, zoom) * x));
-    long tiley = Math.round(Math.floor(Math.pow(2, zoom) * y));
-    return new TileCoordinates(zoom, tilex, tiley);
-  }
-  /**
-   * Get the coordinates, in terms of the coorinate reference system used by tiles
-   * i.e. convert the WGS84 coordinates to the integral coordinate system 
-   * for the given zoom level, returned as a point in double precision zoom,x,y 
-   * format.  This allows for calculation of distance from a non-integer central 
-   * point to integer tile reference locations, such that collections may be 
-   * ordered by distance from map extent's center.
-   * 
-   * @param zoom integer zoom level at which to do the conversion
-   * @param latitude double latitude of the point to convert
-   * @param longitude double longitude of the point to convert
-   * @return a point in TileDecimalCoordinate space
-   */
-  protected TileDecimalCoordinates getTileDecimalCoordinates(int zoom, double latitude, double longitude) {
-    // see http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Lon..2Flat._to_tile_numbers
-    double lat = Math.toRadians(latitude);
-    double lon = Math.toRadians(longitude);
-    
-    double x = lon;
-    double y = Math.log( Math.tan(lat)+(1.0/Math.cos(lat)) );
-    x = (1.0 + ( x / Math.PI)) / 2.0;
-    y = (1.0 - ( y / Math.PI)) / 2.0;
-    double xd = Math.pow(2, zoom) * x;
-    double yd  = Math.pow(2, zoom) * y;
-    return new TileDecimalCoordinates(zoom, xd, yd);
-  }
-  /**
-   * Counts the number of tiles at the specified zoom level which intersect the
-   * given bbox.
-   * 
-   * @param zoom integer zoom level at which count tiles
-   * @param bbox Bbox bbox the extent within which to count tiles
-   * @return long number of tiles
-   */
-  protected long tileCount(int zoom, Bbox bbox) {
-    if (zoom == -1 || bbox == null) return 0;
-    // the tile coordinate system has +y downwards, so that is why min/max are defined this way
-    TileCoordinates min = getTileCoordinates(zoom,bbox.getNorth(),bbox.getWest());
-    TileCoordinates max = getTileCoordinates(zoom,bbox.getSouth(), bbox.getEast());
-    // integer coordinate system, bump max values up to next increment
-    long width = max.x+1 - min.x;
-    long height = max.y+1 - min.y;
-    return width * height;
-  }
-  /**
-   * Count the width of the bbox at the given zoom level in integral tile units.
-   * @param zoom integer zoom level at which to calculate the width
-   * @param bbox the bbox for which the calculation/conversion should be done
-   * @return long the number of tiles wide the bbox is at the zoom level
-   */
-  protected long tileWidth(int zoom, Bbox bbox) {
-      if (zoom == -1 || bbox == null) return 0;
-      TileCoordinates min = getTileCoordinates(zoom,bbox.getNorth(),bbox.getWest());
-      TileCoordinates max = getTileCoordinates(zoom,bbox.getSouth(), bbox.getEast());
-      return max.x+1 - min.x;
-  }
-  /**
-   * Get a paged List of tiles in terms of their integral x,y coordinates for a given
-   * bbox at the given zoom level, optionally offset by some number of tiles.
-   * @param zoom
-   * @param bbox
-   * @param start
-   * @return a "page" / List of integer tile coordinates in the requested extent
-   */
-  protected List<TileCoordinates> getTilesInBbox(int zoom, Bbox bbox, long start) {
-    TileCoordinates min = getTileCoordinates(zoom,bbox.getNorth(),bbox.getWest());
-    TileCoordinates max = getTileCoordinates(zoom,bbox.getSouth(), bbox.getEast());
-    TileDecimalCoordinates centre = getTileDecimalCoordinates(zoom,bbox.getEnvelope().centre().y,bbox.getEnvelope().centre().x);
-    long width = tileWidth(zoom, bbox);
-    List<TileCoordinates> tiles = new ArrayList<>();
-    for (long i=(start > 0?min.y+start/width:min.y); i <= max.y; i++) {
-      for (long j = start > 0?min.x+(start % width):min.x;j <=max.x; j++) {
-        if (tiles.size() < pageSize) {
-          // constructor args: zoom,x,y 
-          if (i >= 0 && i <= maxima.get(zoom).y && j >= 0 && j < maxima.get(zoom).x) {
-            tiles.add(new TileCoordinates(zoom,j, i));
-          }
-        } else {
-          break;
-        }
-      }
-    }
-    // note that where > 1 url templates have been provided, there will be ties
-    // there is no way at present to force the order of ties.  Observed is that
-    // the second url template generates a tile reference that places second
-    // in the sorting.  Presumably this fortuitous bounce applies to two or more
-    // templates as well.  If not, will have to figure out how to weight / rank
-    // ties in this sort.
-    Collections.sort(tiles, new TileComparator(centre));
-    return tiles;
   }
   /**
    * Compares two tile coordinates and ranks them by distance from the constructed
@@ -417,21 +300,4 @@ public class MapMLPrinter {
         return Math.sqrt(dx*dx + dy*dy);
       }
   }
-  /**
-   * Represents a 'coordinate' in a tiled coordinate system, where the origin
-   * is at the upper left, and x is postive to the right, y is positive down.
-   * The left/top edge is the coordinate value.
-   * 
-   */
-  protected class TileCoordinates {
-      public int z;
-      public long x;
-      public long y;
-      public TileCoordinates(int zoom, long x, long y) {
-        this.z = zoom;
-        this.x = x;
-        this.y = y;
-      }
-  }
-
 }

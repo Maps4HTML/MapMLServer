@@ -113,11 +113,6 @@ public class QueryParamTest {
         request.setParameter("projection", "WGS84");
         projection = (String)QueryParam.projection.parse(request);
         assertTrue("projection should be WGS84",projection.equals("WGS84"));
-        try {
-            request.setParameter("projection","foo");
-            projection = (String)QueryParam.projection.parse(request);
-            fail("Failed to reject invalid projection value");
-        } catch (RuntimeException e) {}
     } catch (RuntimeException re) {
         fail("Error parsing valid values of projection");
     }

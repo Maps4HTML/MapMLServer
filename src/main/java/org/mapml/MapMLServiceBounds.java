@@ -41,7 +41,8 @@
 
 package org.mapml;
 
-import org.mapml.util.Bbox;
+import org.mapml.projections.Bounds;
+import org.mapml.projections.TiledCRS;
 
   /**
    * This class represents the bounds of the MapML service, such that a request
@@ -51,39 +52,51 @@ import org.mapml.util.Bbox;
 public class MapMLServiceBounds {
     int minZoom;
     int maxZoom;
-    Bbox bbox;
+    Bounds bounds;
+    Bounds[] pixelBounds;
     final String projection;
+    TiledCRS tiledCRS;
     /**
      * Create the service bounds.
      * @param minZoom the minimum zoom level (smallest scale) 
      * @param maxZoom the maximum zoom level (largest scale)
-     * @param bbox  the horizontal extent of the service, in WGS84
+     * @param bounds  the horizontal extent of the service, in projected *but not scaled*, units
+     * @param projection the name of the Tiled Coordinate Reference System
      */
-    public MapMLServiceBounds(int minZoom, int maxZoom, Bbox bbox){
+    public MapMLServiceBounds(int minZoom, int maxZoom, Bounds bounds, TiledCRS tiledCRS){
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
-        this.bbox = bbox;
-        this.projection = "WGS84";
+        this.bounds = bounds;
+        this.tiledCRS = tiledCRS;
+        this.projection = tiledCRS.getName();
+        int levels = maxZoom - minZoom + 1;
+        this.pixelBounds = new Bounds[levels];
+        for (int i = minZoom; i <= maxZoom;i++) {
+            this.pixelBounds[i] = tiledCRS.getPixelBounds(bounds, i);
+        }
     }
-    public double getWest() { return bbox.getWest(); }
-    public double getSouth() { return bbox.getSouth(); }
-    public double getEast() { return bbox.getEast(); }
-    public double getNorth() { return bbox.getNorth(); }
+    public double getXmin() { return bounds.getMin().x; }
+    public double getYmin() { return bounds.getMin().y; }
+    public double getXmax() { return bounds.getMax().x; }
+    public double getYmax() { return bounds.getMax().y; }
     public int getMinZoom() { return this.minZoom; }
     public int getMaxZoom() { return this.maxZoom; }
-    public Bbox getBbox() { return this.bbox; }
+    public Bounds getBounds() { return this.bounds; }
+    public Bounds getPixelBounds(int zoom) {
+        if (zoom == -1) return null;
+        return this.pixelBounds[zoom];
+    }
     /**
-     * Determine if the given bbox (other) intersects this bbox AND if the
+     * Determine if the given bounds (other) intersects this bounds AND if the
      * given zoom level is within the min/max range of zoom level for this
      * @param zoom -1 is a noop, otherwise checks that minZoom <= zoom <= maxZoom
      * @param other null is a noop, otherwise checks that the other envelope intersects 
      * the envelope of this object
      * @return  this.bounds intersects other.bounds
      */
-    public boolean intersects(int zoom, Bbox other) {
+    public boolean intersects(int zoom, Bounds other) {
         if (zoom == -1) return false;
         if (other == null) return false;
-        return (this.minZoom <= zoom && zoom <= this.maxZoom && 
-            this.bbox.getEnvelope().intersects(other.getEnvelope()));
+        return this.pixelBounds[zoom].intersects(other);
     }
 }

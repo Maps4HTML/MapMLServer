@@ -38,41 +38,71 @@
  * publicity pertaining to the work without specific, written prior permission. 
  * Title to copyright in this work will at all times remain with copyright holders.
 */
+package org.mapml.projections;
 
-
-package org.mapml;
-
-import java.util.Arrays;
-import java.util.List;
-
-/**
- *
- * @author Peter Rushforth
- */
-public class MapMLConstants {
-      private MapMLConstants() {};
-      
-      public static final String REL_WEST =       "west";
-      public static final String REL_SOUTHWEST =  "southwest";
-      public static final String REL_SOUTH =      "south";
-      public static final String REL_SOUTHEAST =  "southeast";
-      public static final String REL_EAST =       "east";
-      public static final String REL_NORTHEAST =  "northeast";
-      public static final String REL_NORTH =      "north";
-      public static final String REL_NORTHWEST =  "northwest";
-      public static final String REL_ZOOMIN =     "zoomin";
-      public static final String REL_ZOOMOUT =    "zoomout";
-      public static final String REL_ZOOMTO =     "zoomto";
-      public static final String REL_PANTO =      "panto";
-      public static final String REL_NEXT =       "next";
-      public static final String REL_LICENSE =    "license";
-      
-      public static enum DIRECTION  
-          {REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST}
-      public static final List<String> CARDINAL_DIRECTIONS = 
-          Arrays.asList(REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST);
-      public static final List<String> ZOOM_RELS = Arrays.asList(REL_ZOOMIN,REL_ZOOMOUT,REL_ZOOMTO);
-      
-      public static int PAGESIZE = 100;
+public class Point implements Cloneable {
+  
+  public double x;
+  public double y;
+  
+  public Point(double x, double y) {
+    this.x = x;
+    this.y = y;
+  }
+  
+  private Point _divideBy(double num) {
+      this.x /= num;
+      this.y /= num;
+      return this;
+  }
+  public Point divideBy(double num) {
+      return this.clone()._divideBy(num);
+  }
+  
+  protected Point clone() {
+      return new Point(this.x, this.y);
+  }
+  
+  public Point floor() {
+      return this.clone()._floor();
+  }
+  
+  private Point _floor() {
+      this.x = Math.floor(this.x);
+      this.y = Math.floor(this.y);
+      return this;
+  }
+  public Point ceil() {
+      return this.clone()._ceil();
+  }
+  
+  private Point _ceil() {
+      this.x = Math.ceil(this.x);
+      this.y = Math.ceil(this.y);
+      return this;
+  }
+  public Point round() {
+      return this.clone()._round();
+  }
+  
+  private Point _round() {
+      this.x = Math.round(this.x);
+      this.y = Math.round(this.y);
+      return this;
+  }
+  
+  public double distanceTo(Point other) {
+      double dx = Math.abs(other.x - this.x);
+      double dy = Math.abs(other.y - this.y);
+      return Math.sqrt(dx*dx + dy*dy);
+  }
+  
+  public double getX() { 
+    return this.x;
+  }
+  
+  public double getY() {
+    return this.y;
+  }
 
 }

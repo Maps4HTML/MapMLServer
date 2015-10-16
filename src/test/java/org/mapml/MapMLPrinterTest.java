@@ -49,13 +49,16 @@ import javax.xml.parsers.DocumentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.mapml.util.Bbox;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.mapml.MapMLPrinter.TileCoordinates;
+import org.mapml.projections.Bounds;
+import org.mapml.projections.LatLng;
+import org.mapml.projections.Point;
+import org.mapml.projections.TiledCRS;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -69,13 +72,19 @@ public class MapMLPrinterTest {
   
   @Before
   public void setUp() {
-    this.printer = new MapMLPrinter();
-    MapMLServiceBounds b = new MapMLServiceBounds(0,18, new Bbox("-180,-85.0511,180,85.0511"));
+    this.printer = new MapMLPrinter("OSMTILE");
+    TiledCRS tcrs = printer.getTiledCRS();
+    
+    Point min = tcrs.project(new LatLng(-85.0511287798,-180));
+    Point max = tcrs.project(new LatLng(85.0511287798,180));
+    
+    
+    MapMLServiceBounds b = new MapMLServiceBounds(0,18, new Bounds(min,max), tcrs);
     printer.setServiceBounds(b);
     printer.setTileServers("a,b,c");
     String[] templates = {"http://{s}.example.com/tile/{z}/{x}/{y}/","http://none.foobar.com/tile/{z}/{x}/{y}/"};
     printer.setTileUrlTemplates(templates);
-    printer.setPageSize(100);
+    tcrs.setPageSize(100);
     printer.setLicenseUrl("http://example.org/license");
     printer.setLicenseTitle("Tooltip info for license");
   }
@@ -84,7 +93,13 @@ public class MapMLPrinterTest {
   public void testXml() {
     ByteArrayOutputStream ba = new ByteArrayOutputStream();
     PrintWriter out = new PrintWriter(ba);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, new Bbox("-75.72056293487547,45.39079543037812,-75.69309711456299,45.40525984235134"), out);
+    
+    TiledCRS tcrs = printer.getTiledCRS();
+    Point min = tcrs.latLngToPoint(new LatLng(45.39079543037812,-75.72056293487547),15);
+    Point max = tcrs.latLngToPoint(new LatLng(45.40525984235134,-75.69309711456299),15);
+    Bounds query = new Bounds(min, max);
+    
+    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, query, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -107,36 +122,17 @@ public class MapMLPrinterTest {
     } catch (ParserConfigurationException e) {}
   }
   @Test
-  public void testNullBbox() {
-    ByteArrayOutputStream ba = new ByteArrayOutputStream();
-    PrintWriter out = new PrintWriter(ba);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, null, out);
-    out.flush();
-    String result = ba.toString();
-    assertNotNull(result);
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    dbf.setValidating(false);
-    dbf.setNamespaceAware(false);
-    try {
-      DocumentBuilder db = dbf.newDocumentBuilder();
-      try  {
-          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
-          // message,expected,actual
-          assertEquals("MapML document must begin with <mapml> element","mapml",d.getDocumentElement().getNodeName());
-          assertEquals("MapML document must have one <head> element",1,d.getElementsByTagName("head").getLength());
-          assertEquals("MapML document must have one <body> element",1,d.getElementsByTagName("body").getLength());
-          assertEquals("test MapML document must have 6 input elements",6,d.getElementsByTagName("input").getLength());
-          assertEquals("test MapML document must have 0 tile elements",0,d.getElementsByTagName("tile").getLength());
-      } catch (Exception se) {
-          fail("Error parsing MapML - document not well-formed");
-      }
-    } catch (ParserConfigurationException e) {}
-  }
-  @Test
   public void testLicense() {
     ByteArrayOutputStream ba = new ByteArrayOutputStream();
     PrintWriter out = new PrintWriter(ba);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, new Bbox("-75.72056293487547,45.39079543037812,-75.69309711456299,45.40525984235134"), out);
+    TiledCRS tcrs = printer.getTiledCRS();
+    Point min = tcrs.project(new LatLng(45.39079543037812,-75.72056293487547));
+    Point max = tcrs.project(new LatLng(45.40525984235134,-75.69309711456299));
+    
+    int zoom = 15;
+    
+    Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
+    printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -169,16 +165,18 @@ public class MapMLPrinterTest {
       printer.setTileUrlTemplates(template);
       
       int zoom = 15;
-      Bbox requestBbox = new Bbox("-75.72056293487547,45.39079543037812,-75.69309711456299,45.40525984235134");
-      double cenLat = requestBbox.getEnvelope().centre().y;
-      double cenLon = requestBbox.getEnvelope().centre().x;
-      MapMLPrinter.TileDecimalCoordinates centre = printer.getTileDecimalCoordinates(zoom,cenLat,cenLon);
+      TiledCRS tcrs = printer.getTiledCRS();
+      Point min = tcrs.project(new LatLng(45.39079543037812,-75.72056293487547));
+      Point max = tcrs.project(new LatLng(45.40525984235134,-75.69309711456299));
+
+      Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
+      Point centre = query.getCentre().divideBy(tcrs.getTileSize());
       double dist, prev = 0.0D;
       
 
       ByteArrayOutputStream ba = new ByteArrayOutputStream();
       PrintWriter out = new PrintWriter(ba);
-      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,requestBbox, out);
+      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
       out.flush();
       String result = ba.toString();
       assertNotNull(result);
@@ -193,9 +191,9 @@ public class MapMLPrinterTest {
             NodeList nl = d.getElementsByTagName("tile");
             for (int i=0;i< nl.getLength();i++) {
               NamedNodeMap atts = nl.item(i).getAttributes();
-              long x = Long.parseLong(atts.getNamedItem("x").getNodeValue());
-              long y = Long.parseLong(atts.getNamedItem("y").getNodeValue());
-              MapMLPrinter.TileCoordinates tc = printer.new TileCoordinates(zoom,x,y);
+              long x = Long.parseLong(atts.getNamedItem("col").getNodeValue());
+              long y = Long.parseLong(atts.getNamedItem("row").getNodeValue());
+              Point tc = new Point(x+0.5,y+0.5);
               dist = centre.distanceTo(tc);
               assertTrue("Tiles must be ordered in increasing distance from request centre", dist >= prev);
               prev = dist;
@@ -207,17 +205,109 @@ public class MapMLPrinterTest {
       } catch (ParserConfigurationException e) {}
   }
   @Test
-  public void testPaging() {
-      String[] template = {"http://none.foobar.com/tile/{z}/{x}/{y}/"};
-      printer.setTileUrlTemplates(template);
-      printer.setPageSize(4);
-      int zoom = 15;
-      // this bbox should return 8 tiles
-      Bbox requestBbox = new Bbox("-75.72056293487547,45.39079543037812,-75.69309711456299,45.40525984235134");
+  public void testBoundsOutsideServiceBounds() {
+
+      int zoom = 0;
+      // the min/max of the service at level 0 = 0,0 256,256, this extent is outside that
+      Point min = new Point(-45,-45);
+      Point max = new Point(-1,-1);
+      Bounds query = new Bounds(min, max);
       
       ByteArrayOutputStream ba = new ByteArrayOutputStream();
       PrintWriter out = new PrintWriter(ba);
-      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,requestBbox, out);
+
+      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
+      out.flush();
+      String result = ba.toString();
+      assertNotNull(result);
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      dbf.setValidating(false);
+      dbf.setNamespaceAware(false);
+      try {
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        try  {
+            Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+            // message,expected,actual
+            assertEquals("MapML document must begin with <mapml> element","mapml",d.getDocumentElement().getNodeName());
+            assertEquals("MapML document must have one <head> element",1,d.getElementsByTagName("head").getLength());
+            assertEquals("MapML document must have one <body> element",1,d.getElementsByTagName("body").getLength());
+            
+            NodeList metaTags = d.getElementsByTagName("meta");
+            int count = 0;
+            for (int i=0;i<d.getElementsByTagName("meta").getLength();i++) {
+              Node metaTag = metaTags.item(i);
+              if (metaTag.getAttributes().getNamedItem("area") != null) {
+                  count = Integer.parseInt(metaTag.getAttributes().getNamedItem("content").getNodeValue());
+                  assertEquals("Tile area of test MapML document must be equal to 1",1,count);
+              }
+            }
+            assertEquals("test MapML document must have 6 input elements",6,d.getElementsByTagName("input").getLength());
+            assertEquals("test MapML document outside of service bounds must have 0 tile elements",0,d.getElementsByTagName("tile").getLength());
+        } catch (Exception se) {
+            fail("Error parsing MapML - document not well-formed");
+        }
+      } catch (ParserConfigurationException e) {}
+  }
+  //@Test
+  public void testBoundsIntersectingServiceBounds() {
+    fail();
+  }
+  @Test
+  public void testNullBounds() {
+    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+    PrintWriter out = new PrintWriter(ba);
+    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, null, "OSMTILE", out);
+    out.flush();
+    String result = ba.toString();
+    assertNotNull(result);
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    dbf.setValidating(false);
+    dbf.setNamespaceAware(false);
+    try {
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      try  {
+          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+          // message,expected,actual
+          assertEquals("MapML document must begin with <mapml> element","mapml",d.getDocumentElement().getNodeName());
+          assertEquals("MapML document must have one <head> element",1,d.getElementsByTagName("head").getLength());
+          assertEquals("MapML document must have one <body> element",1,d.getElementsByTagName("body").getLength());
+          assertEquals("test MapML document must have 6 input elements",6,d.getElementsByTagName("input").getLength());
+          assertEquals("test MapML document must have 0 tile elements",0,d.getElementsByTagName("tile").getLength());
+      } catch (Exception se) {
+          fail("Error parsing MapML - document not well-formed");
+      }
+    } catch (ParserConfigurationException e) {}
+  }
+  
+  public void testUnsupportedProjection() {
+        // TODO move and refactor the following test to the Servlet level.
+//        try {
+//            request.setParameter("projection","foo");
+//            projection = (String)QueryParam.projection.parse(request);
+//            fail("Failed to reject invalid projection value");
+//        } catch (RuntimeException e) {}
+            // make sure the available projection is printed, not the 'default' OSMTILE value.
+            // this allows the request to proceed where a bare URL is requested,
+            // the service will reply with the necessary extent to allow the client
+            // to proceed.
+  }
+          
+  @Test
+  public void testPaging() {
+      String[] template = {"http://none.foobar.com/tile/{z}/{x}/{y}/"};
+      printer.setTileUrlTemplates(template);
+      int zoom = 15;
+      
+      TiledCRS tcrs = printer.getTiledCRS();
+      tcrs.setPageSize(4);
+      Point min = tcrs.latLngToPoint(new LatLng(45.39079543037812,-75.72056293487547),zoom);
+      Point max = tcrs.latLngToPoint(new LatLng(45.40525984235134,-75.69309711456299),zoom);
+      // this bbox should return 8 tiles
+      Bounds query = new Bounds(min, max);
+      
+      ByteArrayOutputStream ba = new ByteArrayOutputStream();
+      PrintWriter out = new PrintWriter(ba);
+      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
       out.flush();
       String result = ba.toString();
       assertNotNull(result);
@@ -249,7 +339,7 @@ public class MapMLPrinterTest {
             }
             ba = new ByteArrayOutputStream();
             out = new PrintWriter(ba);
-            printer.printMapMLDoc("application/xml", start, "http://example.com", zoom ,requestBbox, out);
+            printer.printMapMLDoc("application/xml", start, "http://example.com", zoom ,query, "OSMTILE", out);
             out.flush();
             result = ba.toString();
             assertNotNull(result);

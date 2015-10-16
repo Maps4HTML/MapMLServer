@@ -1,9 +1,9 @@
 /*
  * Copyright 2015 Canada Centre for Mapping and Earth Observation, 
  * Earth Sciences Sector, Natural Resources Canada.
- *
+ * 
  * License
- *
+ * 
  * By obtaining and/or copying this work, you (the licensee) agree that you have 
  * read, understood, and will comply with the following terms and conditions.
  * 
@@ -11,10 +11,10 @@
  * modification, for any purpose and without fee or royalty is hereby granted, 
  * provided that you include the following on ALL copies of the work or portions 
  * thereof, including modifications:
- *
+ * 
  * The full text of this NOTICE in a location viewable to users of the 
  * redistributed or derivative work.
- *
+ * 
  * Any pre-existing intellectual property disclaimers, notices, or terms and 
  * conditions. If none exist, the W3C Software and Document Short Notice should 
  * be included.
@@ -25,7 +25,7 @@
  * Copyright © [YEAR] W3C® (MIT, ERCIM, Keio, Beihang)."
  * 
  * Disclaimers
- *
+ * 
  * THIS WORK IS PROVIDED "AS IS," AND COPYRIGHT HOLDERS MAKE NO REPRESENTATIONS 
  * OR WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO, WARRANTIES OF 
  * MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF THE 
@@ -37,42 +37,37 @@
  * The name and trademarks of copyright holders may NOT be used in advertising or 
  * publicity pertaining to the work without specific, written prior permission. 
  * Title to copyright in this work will at all times remain with copyright holders.
-*/
-
-
-package org.mapml;
-
-import java.util.Arrays;
-import java.util.List;
-
-/**
- *
- * @author Peter Rushforth
  */
-public class MapMLConstants {
-      private MapMLConstants() {};
-      
-      public static final String REL_WEST =       "west";
-      public static final String REL_SOUTHWEST =  "southwest";
-      public static final String REL_SOUTH =      "south";
-      public static final String REL_SOUTHEAST =  "southeast";
-      public static final String REL_EAST =       "east";
-      public static final String REL_NORTHEAST =  "northeast";
-      public static final String REL_NORTH =      "north";
-      public static final String REL_NORTHWEST =  "northwest";
-      public static final String REL_ZOOMIN =     "zoomin";
-      public static final String REL_ZOOMOUT =    "zoomout";
-      public static final String REL_ZOOMTO =     "zoomto";
-      public static final String REL_PANTO =      "panto";
-      public static final String REL_NEXT =       "next";
-      public static final String REL_LICENSE =    "license";
-      
-      public static enum DIRECTION  
-          {REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST}
-      public static final List<String> CARDINAL_DIRECTIONS = 
-          Arrays.asList(REL_WEST,REL_SOUTHWEST,REL_SOUTH,REL_SOUTHEAST,REL_EAST,REL_NORTHEAST,REL_NORTH,REL_NORTHWEST);
-      public static final List<String> ZOOM_RELS = Arrays.asList(REL_ZOOMIN,REL_ZOOMOUT,REL_ZOOMTO);
-      
-      public static int PAGESIZE = 100;
+package org.mapml.projections;
 
+import org.osgeo.proj4j.CRSFactory;
+import org.osgeo.proj4j.CoordinateReferenceSystem;
+import org.osgeo.proj4j.ProjCoordinate;
+
+/* 
+* The Projection class supplies proj4j projection services for known projections
+*/
+public class Projection {
+  
+  private final CoordinateReferenceSystem proj4CRS;
+  private static final CRSFactory factory = new CRSFactory();
+
+  
+  public Projection(String proj4code) {
+      this.proj4CRS = factory.createFromName(proj4code);
+  }
+  
+  public Point project(LatLng latlng) {
+      ProjCoordinate src = new ProjCoordinate(latlng.lng,latlng.lat);
+      ProjCoordinate dest = new ProjCoordinate();
+      proj4CRS.getProjection().project(src, dest);
+      return new Point(dest.x,dest.y);
+  }
+  public LatLng unproject(Point p) {
+      ProjCoordinate src = new ProjCoordinate(p.x,p.y);
+      ProjCoordinate dest = new ProjCoordinate();
+      proj4CRS.getProjection().inverseProject(src, dest);
+      return new LatLng(dest.y,dest.x);
+  }
+  
 }
