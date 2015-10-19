@@ -103,20 +103,20 @@
       </init-param>
       <load-on-startup>3</load-on-startup>
     </servlet>
-<!--    <servlet>
+    <servlet>
       <servlet-name>arctic</servlet-name>
       <servlet-class>org.mapml.servlet.MapMLServlet</servlet-class>
       <init-param>
         <param-name>extent</param-name>
-        <param-value>-180,50,180,90</param-value>
+        <param-value>-28567784.109254867,-28567784.109254755,32567784.109255023,32567784.10925506</param-value>
       </init-param>
       <init-param>
         <param-name>projection</param-name>
-        <param-value>NUSPTILE</param-value>
+        <param-value>APSTILE</param-value>
       </init-param>
       <init-param>
         <param-name>zoomRange</param-name>
-        <param-value>0,9</param-value>
+        <param-value>0,10</param-value>
       </init-param>
       <init-param>
         <param-name>tileUrlTemplate</param-name>
@@ -131,7 +131,7 @@
         <param-value>Sources: Esri, GEBCO, NOAA, National Geographic, DeLorme, HERE, Geonames.org, and other contributors</param-value>
       </init-param>
       <load-on-startup>4</load-on-startup>
-    </servlet>-->
+    </servlet>
   <mime-mapping>
     <extension>ico</extension>
     <mime-type>image/x-icon</mime-type>
@@ -149,7 +149,7 @@
     <url-pattern>/cbmt/*</url-pattern>    
   </servlet-mapping>
   <servlet-mapping>
-    <servlet-name>relief</servlet-name>
-    <url-pattern>/relief/*</url-pattern>    
+    <servlet-name>arctic</servlet-name>
+    <url-pattern>/arctic/*</url-pattern>    
   </servlet-mapping>
 </web-app>

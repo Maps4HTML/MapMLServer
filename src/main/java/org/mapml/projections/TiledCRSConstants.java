@@ -105,5 +105,36 @@ public class TiledCRSConstants {
         };
         final Point CBMTILE_TILE_ORIGIN = new Point(-34655800D, 39310000D);
         tiledCRSDefinitions.put(CBMTILE_NAME, new TiledCRSParams(CBMTILE_NAME, CBMTILE_CODE, CBMTILE_BOUNDS, CBMTILE_TILE_SIZE, CBMTILE_TILE_ORIGIN, CBMTILE_SCALES));
+        
+        /* Arctic Polar Stereographic, origin and scales defined by map service at http://maps8.arcgisonline.com/arcgis/rest/services/Arctic_Polar_Ocean_Base/MapServer */
+        final String APSTILE_NAME = "APSTILE";
+        final String APSTILE_CODE = "EPSG:5936";
+        final Bounds APSTILE_BOUNDS = new Bounds(new Point(-28567784.109254867D, -28567784.109254755D),new Point( 32567784.109255023D,32567784.10925506D));
+        final int    APSTILE_TILE_SIZE = 256;
+        final double[] APSTILE_SCALES = {
+                  /* "scale" is the reciprocal of "resolution", per Proj4Leaflet.js */
+                  1 / 238810.813354D,
+                  1 / 119405.406677D,
+                  1 / 59702.7033384999D,
+                  1 / 29851.3516692501D,
+                  1 / 14925.675834625D,
+                  1 / 7462.83791731252D,
+                  1 / 3731.41895865639D,
+                  1 / 1865.70947932806D,
+                  1 / 932.854739664032D,
+                  1 / 466.427369832148D,
+                  1 / 233.213684916074D,
+                  1 / 116.606842458037D,
+                  1 / 58.3034212288862D,
+                  1 / 29.1517106145754D,
+                  1 / 14.5758553072877D,
+                  1 / 7.28792765351156D,
+                  1 / 3.64396382688807D,
+                  1 / 1.82198191331174D,
+                  1 / 0.910990956788164D,
+                  1 / 0.45549547826179D
+        };
+        final Point APSTILE_TILE_ORIGIN = new Point(-28567784.109255D,32567784.109255D);
+        tiledCRSDefinitions.put(APSTILE_NAME, new TiledCRSParams(APSTILE_NAME, APSTILE_CODE, APSTILE_BOUNDS, APSTILE_TILE_SIZE, APSTILE_TILE_ORIGIN, APSTILE_SCALES));
     }
 }
