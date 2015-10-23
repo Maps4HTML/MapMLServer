@@ -5,7 +5,7 @@
     <groupId>org.mapml</groupId>
     <artifactId>MapMLTileServlet</artifactId>
     <version>0.2-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
 
     <name>MapMLTileServlet</name>
 

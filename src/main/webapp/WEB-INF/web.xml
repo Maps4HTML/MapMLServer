@@ -75,6 +75,35 @@
       <load-on-startup>3</load-on-startup>
     </servlet>
     <servlet>
+      <servlet-name>cbmtlcc</servlet-name>
+      <servlet-class>org.mapml.servlet.MapMLServlet</servlet-class>
+      <init-param>
+        <param-name>extent</param-name>
+        <param-value>-7786477,-927808,7148753,7928344</param-value>
+      </init-param>
+      <init-param>
+        <param-name>projection</param-name>
+        <param-value>CBMTILE</param-value>
+      </init-param>
+      <init-param>
+        <param-name>zoomRange</param-name>
+        <param-value>0,17</param-value>
+      </init-param>
+      <init-param>
+        <param-name>tileUrlTemplate</param-name>
+        <param-value>http://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBMT_CBCT_GEOM_3978/MapServer/tile/{z}/{y}/{x},http://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBMT_TXT_3978/MapServer/tile/{z}/{y}/{x}</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseUrl</param-name>
+        <param-value>http://www.nrcan.gc.ca/earth-sciences/geography/topographic-information/free-data-geogratis/licence/17285</param-value>
+      </init-param>
+      <init-param>
+        <param-name>licenseTitle</param-name>
+        <param-value>Canada Base Map © Natural Resources Canada</param-value>
+      </init-param>
+      <load-on-startup>4</load-on-startup>
+    </servlet>
+    <servlet>
       <servlet-name>relief</servlet-name>
       <servlet-class>org.mapml.servlet.MapMLServlet</servlet-class>
       <init-param>
@@ -147,6 +176,10 @@
   <servlet-mapping>
     <servlet-name>cbmt</servlet-name>
     <url-pattern>/cbmt/*</url-pattern>    
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>cbmtlcc</servlet-name>
+    <url-pattern>/cbmtlcc/*</url-pattern>    
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>arctic</servlet-name>
