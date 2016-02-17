@@ -140,6 +140,9 @@ public class TiledCRS {
         Point untransformedPoint = this.transformation.untransform(p, this.scales[zoom]);
         return this.projection.unproject(untransformedPoint);
     }
+    public Point untransform(Point p, int zoom) {
+      return this.transformation.untransform(p, this.scales[zoom]);
+    }
     /**
      * 
      * @param bounds the LatLngBounds that should be transformed to projected, scaled bounds

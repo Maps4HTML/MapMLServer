@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import org.mapml.projections.Bounds;
+import org.mapml.projections.Point;
 import org.mapml.projections.TileCoordinates;
 import org.mapml.projections.TiledCRS;
 
@@ -72,7 +73,8 @@ public class MapMLPrinter {
   private final HashSet<String> tileServers = new HashSet<>();
   private String licenseUrl;
   private String licenseTitle;
-
+  private String[] wmsUrlTemplates;
+  private String title;
 
   public MapMLPrinter(String projection) {
     this.tiledCRS = new TiledCRS(projection);
@@ -119,6 +121,21 @@ public class MapMLPrinter {
       this.tileServers.addAll(Arrays.asList(servers.split(",")));
     }
   }
+  public String[] getWmsUrlTemplates() {
+    return wmsUrlTemplates;
+  }
+
+  public void setWmsUrlTemplates(String[] wmsUrlTemplates) {
+    this.wmsUrlTemplates = wmsUrlTemplates;
+    for(int i=0;i<this.wmsUrlTemplates.length;i++) {
+        this.wmsUrlTemplates[i] = this.wmsUrlTemplates[i].trim();
+    }
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+  
   private int getPageSize() {
       return this.tiledCRS.getPageSize();
   }
@@ -160,7 +177,7 @@ public class MapMLPrinter {
               next = 0L;
       }
     
-      out.print("<mapml><head><title>Tile references for extent@value, sorted by distance from centre</title>");
+      out.print("<mapml><head><title>"+title+"</title>");
       out.print("<meta http-equiv=\"Content-Type\" content=\""+responseType+"\"/>");
       out.print("<meta charset=\"utf-8\"/>");
       out.print("<meta name=\"projection\" content=\""+projection+"\"/>");
@@ -176,9 +193,41 @@ public class MapMLPrinter {
           if (next > 0 && next != tileCount) {
               out.print("<link rel=\"next\" href=\""+base+"?xmin="+bounds.getMin().x+"&amp;ymin="+bounds.getMin().y+"&amp;xmax="+bounds.getMax().x+"&amp;ymax="+bounds.getMax().y+"&amp;projection=OSMTILE&amp;zoom="+zoom+"&amp;start="+next+"\" type=\"text/mapml\"/> ");
           }
+          // a servlet instance can serve tiles and/or wms request urls
+          if (this.tileUrlTemplates != null) {
           out.print(getTileElements(zoom, bounds, start));
       }
+          if (this.wmsUrlTemplates != null) {
+              out.print(getImageElements(bounds, zoom));
+          }
+      }
       out.print("</body></mapml>");
+  }
+  protected String getImageElements(Bounds bounds, int zoom) {
+    StringBuilder images = new StringBuilder();
+    
+    if (wmsUrlTemplates.length != 0) {
+      long width = (long)(bounds.getMax().x - bounds.getMin().x);
+      long height = (long)(bounds.getMax().y - bounds.getMin().y);
+      Point min = tiledCRS.untransform(bounds.getMin(), zoom);
+      Point max = tiledCRS.untransform(bounds.getMax(), zoom);
+      double xmin,ymin,xmax,ymax;
+      xmin = Math.min(min.x, max.x);
+      ymin = Math.min(min.y, max.y);
+      xmax = Math.max(min.x, max.x);
+      ymax = Math.max(min.y,max.y);
+       for (String template : wmsUrlTemplates) {
+          String src = template
+             .replaceFirst("\\{xmin\\}", xmin+"").replaceFirst("\\{ymin\\}", ymin+"")
+             .replaceFirst("\\{xmax\\}", xmax+"").replaceFirst("\\{ymax\\}", ymax+"")
+             .replaceFirst("\\{w\\}", width+"").replaceFirst("\\{h\\}", height+"")
+             .replaceAll("&", "&amp;");
+          images.append("<image ")
+           .append("src=\"").append(src).append("\"/>");
+       }
+       return images.toString();
+    }
+    return "";
   }
   /**
    * Gets the string representing the extent of the service, reflecting the

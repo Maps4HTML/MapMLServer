@@ -82,8 +82,10 @@ public class MapMLPrinterTest {
     MapMLServiceBounds b = new MapMLServiceBounds(0,18, new Bounds(min,max), tcrs);
     printer.setServiceBounds(b);
     printer.setTileServers("a,b,c");
-    String[] templates = {"http://{s}.example.com/tile/{z}/{x}/{y}/","http://none.foobar.com/tile/{z}/{x}/{y}/"};
-    printer.setTileUrlTemplates(templates);
+    String[] tileServerTemplates = {"http://{s}.example.com/tile/{z}/{x}/{y}/","http://none.foobar.com/tile/?z={z}&x={x}&y={y}/"};
+    printer.setTileUrlTemplates(tileServerTemplates);
+    String[] wmsServerTemplates = {"http://foo.example.com/wms/?W={w}&H={h}&BBOX={xmin},{ymin},{xmax},{ymax}","http://bar.example.com/wms/{xmin}/{ymin}/{xmax}/{ymax}/{w}/{h}/"};
+    printer.setWmsUrlTemplates(wmsServerTemplates);
     tcrs.setPageSize(100);
     printer.setLicenseUrl("http://example.org/license");
     printer.setLicenseTitle("Tooltip info for license");
@@ -116,6 +118,7 @@ public class MapMLPrinterTest {
           assertEquals("MapML document must have one <body> element",1,d.getElementsByTagName("body").getLength());
           assertEquals("test MapML document must have 6 input elements",6,d.getElementsByTagName("input").getLength());
           assertEquals("test MapML document must have 16 tile elements",16,d.getElementsByTagName("tile").getLength());
+          assertEquals("test MapML document must have 2 image elements", 2, d.getElementsByTagName("image").getLength());
       } catch (Exception se) {
           fail("Error parsing MapML - document not well-formed");
       }

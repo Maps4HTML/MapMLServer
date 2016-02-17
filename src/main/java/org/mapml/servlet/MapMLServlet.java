@@ -43,6 +43,7 @@ package org.mapml.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -77,7 +78,7 @@ public class MapMLServlet extends HttpServlet {
     }
 
     @Override
-    public void init() {
+    public void init() throws ServletException {
         ServletConfig config = getServletConfig();
         Bounds extent = new Bounds(config.getInitParameter("extent"));
         String[] range = config.getInitParameter("zoomRange").split(",");
@@ -87,10 +88,22 @@ public class MapMLServlet extends HttpServlet {
         
         printer.setServiceBounds(new MapMLServiceBounds(Integer.parseInt(range[0]),Integer.parseInt(range[1]),extent, printer.getTiledCRS()));
         
-        printer.setTileUrlTemplates(config.getInitParameter("tileUrlTemplate").split(","));
+        String tileUrlTemplates = config.getInitParameter("tileUrlTemplate");
+        String wmsUrlTemplates = config.getInitParameter("wmsUrlTemplate");
+        
+        if (tileUrlTemplates == null && wmsUrlTemplates == null) {
+            throw new ServletException("Error reading tileUrlTemplate and wmsUrlTemplate config parameters from web.xml\n");
+        }
+        if (tileUrlTemplates != null) {
+            printer.setTileUrlTemplates(tileUrlTemplates.split("\\n"));
         printer.setTileServers(config.getInitParameter("tileServers"));
+        }
+        if (wmsUrlTemplates != null) {
+            printer.setWmsUrlTemplates(wmsUrlTemplates.split("\\n"));
+        }
         printer.setLicenseUrl(config.getInitParameter("licenseUrl"));
         printer.setLicenseTitle(config.getInitParameter("licenseTitle"));
+        printer.setTitle(config.getInitParameter("title"));
     }
     /**
      * Processes <code>GET</code> requests.
