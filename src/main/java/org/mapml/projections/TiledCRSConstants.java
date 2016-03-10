@@ -101,7 +101,9 @@ public class TiledCRSConstants {
                  1 / 22.48962831258996D,
                  1 / 13.229193125052918D,
                  1 / 7.9375158750317505D, 
-                 1 / 4.6302175937685215D    
+                 1 / 4.6302175937685215D,
+                 1 / 2.6458386250105836D,
+                 1 / 1.5875031750063502D
         };
         final Point CBMTILE_TILE_ORIGIN = new Point(-34655800D, 39310000D);
         tiledCRSDefinitions.put(CBMTILE_NAME, new TiledCRSParams(CBMTILE_NAME, CBMTILE_CODE, CBMTILE_BOUNDS, CBMTILE_TILE_SIZE, CBMTILE_TILE_ORIGIN, CBMTILE_SCALES));

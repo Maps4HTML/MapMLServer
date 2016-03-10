@@ -41,6 +41,7 @@
 
 package org.mapml;
 
+import org.mapml.exceptions.MapMLException;
 import org.mapml.projections.Bounds;
 import org.mapml.projections.TiledCRS;
 
@@ -56,6 +57,7 @@ public class MapMLServiceBounds {
     Bounds[] pixelBounds;
     final String projection;
     TiledCRS tiledCRS;
+    public static int MAX_LEVELS = 26;
     /**
      * Create the service bounds.
      * @param minZoom the minimum zoom level (smallest scale) 
@@ -70,7 +72,10 @@ public class MapMLServiceBounds {
         this.tiledCRS = tiledCRS;
         this.projection = tiledCRS.getName();
         int levels = maxZoom - minZoom + 1;
-        this.pixelBounds = new Bounds[levels];
+        if (levels > MAX_LEVELS) {
+          throw new MapMLException("Number of zoom levels ("+levels+") in range: "+minZoom+"-"+maxZoom+" exceeds maximum: "+MAX_LEVELS);
+        }
+        this.pixelBounds = new Bounds[MAX_LEVELS];
         for (int i = minZoom; i <= maxZoom;i++) {
             this.pixelBounds[i] = tiledCRS.getPixelBounds(bounds, i);
         }
@@ -84,6 +89,7 @@ public class MapMLServiceBounds {
     public Bounds getBounds() { return this.bounds; }
     public Bounds getPixelBounds(int zoom) {
         if (zoom == -1) return null;
+        if (!(minZoom <= zoom && zoom <= maxZoom)) return null;
         return this.pixelBounds[zoom];
     }
     /**
