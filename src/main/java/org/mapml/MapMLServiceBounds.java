@@ -65,15 +65,24 @@ public class MapMLServiceBounds {
      * @param bounds  the horizontal extent of the service, in projected *but not scaled*, units
      * @param projection the name of the Tiled Coordinate Reference System
      */
-    public MapMLServiceBounds(int minZoom, int maxZoom, Bounds bounds, TiledCRS tiledCRS){
+    public MapMLServiceBounds(int minZoom, int maxZoom, Bounds bounds, TiledCRS tiledCRS) {
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
         this.bounds = bounds;
         this.tiledCRS = tiledCRS;
         this.projection = tiledCRS.getName();
+        if (minZoom < 0) {
+          throw new MapMLException("bad minZoom: "+ minZoom);
+        }
         int levels = maxZoom - minZoom + 1;
         if (levels > MAX_LEVELS) {
-          throw new MapMLException("Number of zoom levels ("+levels+") in range: "+minZoom+"-"+maxZoom+" exceeds maximum: "+MAX_LEVELS);
+          throw new MapMLException("Number of zoom levels ("+levels+") in range: "
+                  +minZoom+"-"+maxZoom+" exceeds maximum: "+MAX_LEVELS);
+        }
+        if (maxZoom > tiledCRS.getMaxZoom()) {
+          throw new MapMLException("maxZoom supplied ("+maxZoom+
+                  ") exceeds maximum zoom of tiled CRS definition for "
+                  +this.projection +"("+tiledCRS.getMaxZoom()+")");
         }
         this.pixelBounds = new Bounds[MAX_LEVELS];
         for (int i = minZoom; i <= maxZoom;i++) {
@@ -88,8 +97,7 @@ public class MapMLServiceBounds {
     public int getMaxZoom() { return this.maxZoom; }
     public Bounds getBounds() { return this.bounds; }
     public Bounds getPixelBounds(int zoom) {
-        if (zoom == -1) return null;
-        if (!(minZoom <= zoom && zoom <= maxZoom)) return null;
+        if (!(minZoom <= zoom && zoom <= maxZoom)) throw new MapMLException("Bad zoom ("+zoom+") bounds requested");
         return this.pixelBounds[zoom];
     }
     /**

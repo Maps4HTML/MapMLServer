@@ -110,6 +110,9 @@ public class TiledCRS {
         this.tileBounds.put(zoom, tb);
       }
     }
+    public int getMaxZoom() {
+      return Collections.max(tileBounds.keySet());
+    }
     
     /**
      * For testing purposes need to be able to set the pagesize. 
