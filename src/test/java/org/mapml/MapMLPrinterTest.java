@@ -89,6 +89,7 @@ public class MapMLPrinterTest {
     tcrs.setPageSize(100);
     printer.setLicenseUrl("http://example.org/license");
     printer.setLicenseTitle("Tooltip info for license");
+    printer.setLegendUrl("http://example.org/legend");
   }
   
   @Test
@@ -157,6 +158,43 @@ public class MapMLPrinterTest {
           assertNotNull(licenseLink);
           assertTrue(licenseLink.getAttribute("href").equals("http://example.org/license"));
           assertTrue(licenseLink.getAttribute("title").equals("Tooltip info for license"));
+      } catch (Exception se) {
+          fail("Error parsing MapML - document not well-formed");
+      }
+    } catch (ParserConfigurationException e) {}
+  }
+  @Test
+  public void testLegend() {
+    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+    PrintWriter out = new PrintWriter(ba);
+    TiledCRS tcrs = printer.getTiledCRS();
+    Point min = tcrs.project(new LatLng(45.39079543037812,-75.72056293487547));
+    Point max = tcrs.project(new LatLng(45.40525984235134,-75.69309711456299));
+    
+    int zoom = 15;
+    
+    Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
+    printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
+    out.flush();
+    String result = ba.toString();
+    assertNotNull(result);
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    dbf.setValidating(false);
+    dbf.setNamespaceAware(false);
+    try {
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      try  {
+          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+          Element legendLink = null;
+          NodeList links = d.getElementsByTagName("link");
+          for (int i=0;i<links.getLength();i++) {
+              if (links.item(i).getAttributes().getNamedItem("rel").getNodeValue().equalsIgnoreCase("legend")) {
+                  legendLink = (Element)links.item(i);
+                  break;
+              }
+          }
+          assertNotNull(legendLink);
+          assertTrue(legendLink.getAttribute("href").equals("http://example.org/legend"));
       } catch (Exception se) {
           fail("Error parsing MapML - document not well-formed");
       }

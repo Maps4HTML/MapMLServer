@@ -102,6 +102,10 @@ public class MapMLServlet extends HttpServlet {
         printer.setLicenseUrl(config.getInitParameter("licenseUrl"));
         printer.setLicenseTitle(config.getInitParameter("licenseTitle"));
         printer.setTitle(config.getInitParameter("title"));
+        
+        if (config.getInitParameter("legendUrl") != null) {
+            printer.setLegendUrl(config.getInitParameter("legendUrl"));
+        }
     }
     /**
      * Processes <code>GET</code> requests.

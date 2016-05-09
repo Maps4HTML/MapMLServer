@@ -73,6 +73,7 @@ public class MapMLPrinter {
   private final HashSet<String> tileServers = new HashSet<>();
   private String licenseUrl;
   private String licenseTitle;
+  private String legendUrl;
   private String[] wmsUrlTemplates;
   private String title;
 
@@ -153,6 +154,13 @@ public class MapMLPrinter {
   public void setLicenseUrl(String url) {
       this.licenseUrl = url;
   }
+  /**
+   * The URL to the legend resource.
+   * @param url 
+   */
+  public void setLegendUrl(String legendUrl) {
+    this.legendUrl = legendUrl.replaceAll("&", "&amp;");
+  }
   public TiledCRS getTiledCRS() {
       return this.tiledCRS;
   }
@@ -184,7 +192,10 @@ public class MapMLPrinter {
       out.print("<meta name=\"zoom\" content=\""+zoom+"\"/>");
       out.print("<meta name=\"area\" content=\""+tileCount+"\"/>");
       out.print("<base href=\""+base+"\"/>");
-      out.print("<link rel=\"license\" href=\""+licenseUrl+"\" title=\""+licenseTitle+"\"/>");
+      out.print("<link rel=\"license\" href=\""+this.licenseUrl+"\" title=\""+this.licenseTitle+"\"/>");
+      if (this.legendUrl != null) {
+          out.print("<link rel=\"legend\" href=\""+this.legendUrl+"\"/>");
+      }
       out.print("</head><body>");
       if (bounds == null || !serviceBounds.intersects(zoom, bounds)) {
           out.print(getExtentElement(base, zoom, bounds, projection));
@@ -195,7 +206,7 @@ public class MapMLPrinter {
           }
           // a servlet instance can serve tiles and/or wms request urls
           if (this.tileUrlTemplates != null) {
-          out.print(getTileElements(zoom, bounds, start));
+              out.print(getTileElements(zoom, bounds, start));
       }
           if (this.wmsUrlTemplates != null) {
               out.print(getImageElements(bounds, zoom));
