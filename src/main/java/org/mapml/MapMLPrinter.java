@@ -173,7 +173,7 @@ public class MapMLPrinter {
    * @param bounds the map extent to use for generating tile references in/touching
    * @param out the PrintWriter on which to print.
    */
-  public void printMapMLDoc(String responseType, long start, String base, int zoom, Bounds bounds, String projection, PrintWriter out) {
+  public void printMapMLDoc(String scheme, String responseType, long start, String base, int zoom, Bounds bounds, String projection, PrintWriter out) {
       long tileCount = bounds == null?0:this.tiledCRS.tileCount(zoom, bounds);
       // check that start is an integral multiple of pageSize
       // check that start is less than tileCount
@@ -206,15 +206,15 @@ public class MapMLPrinter {
           }
           // a servlet instance can serve tiles and/or wms request urls
           if (this.tileUrlTemplates != null) {
-              out.print(getTileElements(zoom, bounds, start));
+              out.print(getTileElements(scheme, zoom, bounds, start));
       }
           if (this.wmsUrlTemplates != null) {
-              out.print(getImageElements(bounds, zoom));
+              out.print(getImageElements(scheme, bounds, zoom));
           }
       }
       out.print("</body></mapml>");
   }
-  protected String getImageElements(Bounds bounds, int zoom) {
+  protected String getImageElements(String scheme, Bounds bounds, int zoom) {
     StringBuilder images = new StringBuilder();
     
     if (wmsUrlTemplates.length != 0) {
@@ -229,6 +229,7 @@ public class MapMLPrinter {
       ymax = Math.max(min.y,max.y);
        for (String template : wmsUrlTemplates) {
           String src = template
+             .replaceFirst("\\{scheme\\}", scheme+"")
              .replaceFirst("\\{xmin\\}", xmin+"").replaceFirst("\\{ymin\\}", ymin+"")
              .replaceFirst("\\{xmax\\}", xmax+"").replaceFirst("\\{ymax\\}", ymax+"")
              .replaceFirst("\\{w\\}", width+"").replaceFirst("\\{h\\}", height+"")
@@ -289,7 +290,7 @@ public class MapMLPrinter {
    * @param start offset 
    * @return the String value of the set of <tile> elements
    */
-  protected String getTileElements(int zoom, Bounds bounds, long start) {
+  protected String getTileElements(String scheme, int zoom, Bounds bounds, long start) {
     StringBuilder tes = new StringBuilder();
     Iterator<String> i = tileServers.iterator();
     String s = "";
@@ -303,6 +304,7 @@ public class MapMLPrinter {
        }
        for (String template : this.tileUrlTemplates) {
           String src = template
+             .replaceFirst("\\{scheme\\}", scheme+"")
              .replaceFirst("\\{s\\}", s+"").replaceFirst("\\{z\\}", t.z+"")
              .replaceFirst("\\{y\\}", t.y+"").replaceFirst("\\{x\\}", t.x+"")
              .replaceAll("&", "&amp;");

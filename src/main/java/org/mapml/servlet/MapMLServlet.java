@@ -149,6 +149,7 @@ public class MapMLServlet extends HttpServlet {
                 responseType = "text/mapml;projection="+projection+";zoom="+zoom;
             }
             response.setContentType(responseType);
+            response.setCharacterEncoding("UTF-8");
             
             // start should be set if this is not the first page of large request
             long start = (Long)QueryParam.start.parse(request);
@@ -157,7 +158,7 @@ public class MapMLServlet extends HttpServlet {
             String base = request.getRequestURL().toString();
 
             try (PrintWriter out = response.getWriter()) {
-                printer.printMapMLDoc(responseType, start, base,  zoom, bounds, projection, out);
+                printer.printMapMLDoc(request.getScheme(), responseType, start, base,  zoom, bounds, projection, out);
             } catch (Exception e) {
                 response.sendError(500, e.getMessage());
             }

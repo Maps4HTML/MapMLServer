@@ -82,9 +82,9 @@ public class MapMLPrinterTest {
     MapMLServiceBounds b = new MapMLServiceBounds(0,18, new Bounds(min,max), tcrs);
     printer.setServiceBounds(b);
     printer.setTileServers("a,b,c");
-    String[] tileServerTemplates = {"http://{s}.example.com/tile/{z}/{x}/{y}/","http://none.foobar.com/tile/?z={z}&x={x}&y={y}/"};
+    String[] tileServerTemplates = {"{scheme}://{s}.example.com/tile/{z}/{x}/{y}/","{scheme}://none.foobar.com/tile/?z={z}&x={x}&y={y}/"};
     printer.setTileUrlTemplates(tileServerTemplates);
-    String[] wmsServerTemplates = {"http://foo.example.com/wms/?W={w}&H={h}&BBOX={xmin},{ymin},{xmax},{ymax}","http://bar.example.com/wms/{xmin}/{ymin}/{xmax}/{ymax}/{w}/{h}/"};
+    String[] wmsServerTemplates = {"{scheme}://foo.example.com/wms/?W={w}&H={h}&BBOX={xmin},{ymin},{xmax},{ymax}","{scheme}://bar.example.com/wms/{xmin}/{ymin}/{xmax}/{ymax}/{w}/{h}/"};
     printer.setWmsUrlTemplates(wmsServerTemplates);
     tcrs.setPageSize(100);
     printer.setLicenseUrl("http://example.org/license");
@@ -102,7 +102,7 @@ public class MapMLPrinterTest {
     Point max = tcrs.latLngToPoint(new LatLng(45.40525984235134,-75.69309711456299),15);
     Bounds query = new Bounds(min, max);
     
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, query, "OSMTILE", out);
+    printer.printMapMLDoc("http","application/xml", 0, "http://example.com", 15, query, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -136,7 +136,7 @@ public class MapMLPrinterTest {
     int zoom = 15;
     
     Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
+    printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -164,6 +164,61 @@ public class MapMLPrinterTest {
     } catch (ParserConfigurationException e) {}
   }
   @Test
+  public void testScheme() {
+    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+    PrintWriter out = new PrintWriter(ba);
+    TiledCRS tcrs = printer.getTiledCRS();
+    Point min = tcrs.project(new LatLng(45.39079543037812,-75.72056293487547));
+    Point max = tcrs.project(new LatLng(45.40525984235134,-75.69309711456299));
+    
+    int zoom = 15;
+    
+    Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
+    printer.printMapMLDoc("https","application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
+    out.flush();
+    String result = ba.toString();
+    assertNotNull(result);
+    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    dbf.setValidating(false);
+    dbf.setNamespaceAware(false);
+    try {
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      try  {
+          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+            NodeList nl = d.getElementsByTagName("tile");
+            for (int i=0;i< nl.getLength();i++) {
+              NamedNodeMap atts = nl.item(i).getAttributes();
+                String url = atts.getNamedItem("src").getNodeValue();
+                assertTrue(url.startsWith("https"));
+            }
+      } catch (Exception se) {
+          fail("Error parsing MapML - document not well-formed");
+      }
+    } catch (ParserConfigurationException e) {}
+    // a printer is re-used from request to request, so the scheme must be
+    // passed as an argument
+    ba = new ByteArrayOutputStream();
+    out = new PrintWriter(ba);
+    printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
+    out.flush();
+    result = ba.toString();
+    assertNotNull(result);
+    try {
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      try  {
+          Document d = db.parse(new ByteArrayInputStream(ba.toByteArray()));
+            NodeList nl = d.getElementsByTagName("tile");
+            for (int i=0;i< nl.getLength();i++) {
+              NamedNodeMap atts = nl.item(i).getAttributes();
+                String url = atts.getNamedItem("src").getNodeValue();
+                assertTrue(url.startsWith("http"));
+            }
+      } catch (Exception se) {
+          fail("Error parsing MapML - document not well-formed");
+      }
+    } catch (ParserConfigurationException e) {}
+  }
+  @Test
   public void testLegend() {
     ByteArrayOutputStream ba = new ByteArrayOutputStream();
     PrintWriter out = new PrintWriter(ba);
@@ -174,7 +229,7 @@ public class MapMLPrinterTest {
     int zoom = 15;
     
     Bounds query = tcrs.getPixelBounds(new Bounds(min, max), zoom);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
+    printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom, query, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -217,7 +272,7 @@ public class MapMLPrinterTest {
 
       ByteArrayOutputStream ba = new ByteArrayOutputStream();
       PrintWriter out = new PrintWriter(ba);
-      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
+      printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
       out.flush();
       String result = ba.toString();
       assertNotNull(result);
@@ -257,7 +312,7 @@ public class MapMLPrinterTest {
       ByteArrayOutputStream ba = new ByteArrayOutputStream();
       PrintWriter out = new PrintWriter(ba);
 
-      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
+      printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
       out.flush();
       String result = ba.toString();
       assertNotNull(result);
@@ -297,7 +352,7 @@ public class MapMLPrinterTest {
   public void testNullBounds() {
     ByteArrayOutputStream ba = new ByteArrayOutputStream();
     PrintWriter out = new PrintWriter(ba);
-    printer.printMapMLDoc("application/xml", 0, "http://example.com", 15, null, "OSMTILE", out);
+    printer.printMapMLDoc("http","application/xml", 0, "http://example.com", 15, null, "OSMTILE", out);
     out.flush();
     String result = ba.toString();
     assertNotNull(result);
@@ -348,7 +403,7 @@ public class MapMLPrinterTest {
       
       ByteArrayOutputStream ba = new ByteArrayOutputStream();
       PrintWriter out = new PrintWriter(ba);
-      printer.printMapMLDoc("application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
+      printer.printMapMLDoc("http","application/xml", 0, "http://example.com", zoom ,query, "OSMTILE", out);
       out.flush();
       String result = ba.toString();
       assertNotNull(result);
@@ -380,7 +435,7 @@ public class MapMLPrinterTest {
             }
             ba = new ByteArrayOutputStream();
             out = new PrintWriter(ba);
-            printer.printMapMLDoc("application/xml", start, "http://example.com", zoom ,query, "OSMTILE", out);
+            printer.printMapMLDoc("http","application/xml", start, "http://example.com", zoom ,query, "OSMTILE", out);
             out.flush();
             result = ba.toString();
             assertNotNull(result);
