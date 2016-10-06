@@ -23,7 +23,7 @@
       </init-param>
       <init-param>
         <param-name>zoomRange</param-name>
-        <param-value>0,17</param-value>
+        <param-value>0,22</param-value>
       </init-param>
       <init-param>
         <param-name>title</param-name>
@@ -95,7 +95,7 @@
       </init-param>
       <init-param>
         <param-name>zoomRange</param-name>
-        <param-value>0,17</param-value>
+        <param-value>0,18</param-value>
       </init-param>
       <init-param>
         <param-name>tileUrlTemplate</param-name>

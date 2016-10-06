@@ -79,9 +79,9 @@ public class QueryParamTest {
         zoom = (Integer)QueryParam.zoom.parse(request);
         assertTrue("Should parse zoom value as 15", (zoom == 15));
         try {
-            request.setParameter("zoom", "19");
+            request.setParameter("zoom", "26");
             zoom = (Integer)QueryParam.zoom.parse(request);
-            fail("Failed to reject invalid zoom value 19");
+            fail("Failed to reject invalid zoom value 26");
         } catch (RuntimeException re) {}
     } catch (RuntimeException re) {
         fail("Failure parsing zoom value.");

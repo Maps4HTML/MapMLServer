@@ -79,7 +79,7 @@ public enum QueryParam {
     zoom("zoom", -1) {
         Object parseValue(String stringValue) {
           int zoom = Integer.parseInt(stringValue);
-          if (zoom < -1 || zoom > 18) throw new RuntimeException("Valid zoom values are between 0 and 18");
+          if (zoom < -1 || zoom > 25) throw new RuntimeException("Valid zoom values are between 0 and 25");
           return zoom;
         }},
     projection("projection", "OSMTILE") {

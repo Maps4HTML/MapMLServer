@@ -80,13 +80,13 @@ public class MapMLServiceBoundsTest {
        fail("Error creating service bounds: "+e.getMessage());
     }
     try {
-      msb = new MapMLServiceBounds(7,25, cbmBounds, cbmTiledCRS);
+      msb = new MapMLServiceBounds(7,26, cbmBounds, cbmTiledCRS);
       fail("Failed due to no exception thrown during attempted bad service bounds creation");
     } catch (RuntimeException e) {
       assertNotNull(msb);
     }
     try {
-      msb = new MapMLServiceBounds(0,25, cbmBounds, cbmTiledCRS);
+      msb = new MapMLServiceBounds(0,26, cbmBounds, cbmTiledCRS);
       fail("Failed due to no exception thrown during attempted bad service bounds creation");
     } catch (RuntimeException e) {
       assertNotNull(msb);
